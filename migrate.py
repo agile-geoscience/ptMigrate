@@ -14,8 +14,8 @@ dummy_password = "new_user"
 
 def data_from_url(url, width, height):
 
-    im = Image.open(cStringIO.StringIO(urllib.urlopen(url).read()))
-    im = im.resize((width, height))
+    im = Image.open(cStringIO.StringIO(urllib.urlopen(url + '=s1200').read()))
+    # im = im.resize((width, height))
     temp = tempfile.NamedTemporaryFile(prefix='tmp', suffix='.png')
     im.save(temp)
     return({"file": open(temp.name, 'rb')})
@@ -67,13 +67,12 @@ class PTMigrate(object):
         get_url = "{api}/api/users?all=1".format(api=self.old_api)
         user_data = requests.get(get_url).json()
 
+        # print(user_data)
         for user in user_data:
-
             try:
-                #create_user_url = "{api}/register".format(api=self.new_api)
-                print(user["email"])
-                
-                """reg = requests.put(create_user_url,
+                create_user_url = "{api}/register".format(api=self.new_api)
+
+                reg = requests.put(create_user_url,
                                    json={"email": user["email"],
                                          "password": dummy_password,
                                          "callback_url": "dummy"})
@@ -85,10 +84,10 @@ class PTMigrate(object):
                 user_data = requests.post(verify_url)
                 self.user_map[user["user_id"]] = user_data.json()["id"]
 
-                print("Success: ", user["user_id"])"""
+                print("Success: ", user["email"])
 
             except Exception as e:
-                print("FAILURE: ", user["user_id"])
+                print("FAILURE: ", user["email"])
 
                 print(e)
 
@@ -131,10 +130,14 @@ class PTMigrate(object):
                              auth=(new_user_id, dummy_password))
 
                 print("added image")
+                image_type = image["pickstyle"]
+
+                if(image_type != 'polygons' and image_type != 'lines' and image_type != 'points'):
+                    image_type = 'polygons'
 
                 # Make the experiment
                 exp_data = dict(image_id=new_image["id"],
-                                pick_type=image["pickstyle"],
+                                pick_type=image_type,
                                 title=image["challenge"],
                                 challenge=image["description"],
                                 client_url="dummy")
@@ -162,7 +165,7 @@ class PTMigrate(object):
                     suc = requests.post(interp_post,
                                         json=data,
                                         auth=(int_user_id, dummy_password))
-                    print(suc)
+                    # print(suc)
                 
             except Exception as e:
                 print(e)
